@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Smart-X IoT Gateway"
+description = "A client-facing configuration dashboard and .NET-ready API contract for registering, validating, and monitoring Smart-X IoT sensor data."
+version = "1.0.0"
+id = "artifacts/smartx-gateway"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25183
+
+[services.development]
+run = "pnpm --filter @workspace/smartx-gateway run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smartx-gateway", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/smartx-gateway/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25183"
+BASE_PATH = "/"
