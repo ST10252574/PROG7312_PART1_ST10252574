@@ -1,0 +1,347 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Smart-X IoT data ingestion and validation gateway
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: gateway
+    description: Smart-X gateway operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /summary:
+    get:
+      operationId: getGatewaySummary
+      tags: [gateway]
+      summary: Get gateway summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewaySummary"
+  /sensors:
+    get:
+      operationId: listSensors
+      tags: [gateway]
+      summary: List registered sensors
+      responses:
+        "200":
+          description: Registered sensors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sensor"
+    post:
+      operationId: createSensor
+      tags: [gateway]
+      summary: Register a sensor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SensorInput"
+      responses:
+        "201":
+          description: Registered sensor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sensor"
+        "400":
+          description: Invalid sensor registration
+  /telemetry:
+    get:
+      operationId: listTelemetry
+      tags: [gateway]
+      summary: List recent telemetry
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Recent telemetry readings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TelemetryReading"
+    post:
+      operationId: ingestTelemetry
+      tags: [gateway]
+      summary: Ingest and validate telemetry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryInput"
+      responses:
+        "202":
+          description: Telemetry accepted or rejected with validation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestionResult"
+        "400":
+          description: Malformed telemetry payload
+  /validation:
+    post:
+      operationId: validateTelemetry
+      tags: [gateway]
+      summary: Validate telemetry without storing it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryInput"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [gateway]
+      summary: List recent gateway activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEvent"
+  /engagement:
+    get:
+      operationId: getEngagementStrategy
+      tags: [gateway]
+      summary: Get the active engagement strategy
+      responses:
+        "200":
+          description: Active engagement strategy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngagementStrategy"
+    put:
+      operationId: updateEngagementStrategy
+      tags: [gateway]
+      summary: Update the active engagement strategy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EngagementStrategyInput"
+      responses:
+        "200":
+          description: Updated engagement strategy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngagementStrategy"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Sensor:
+      type: object
+      required: [id, macAddress, location, category, status, lastSeen, readingsToday]
+      properties:
+        id:
+          type: string
+        macAddress:
+          type: string
+        location:
+          type: string
+        category:
+          type: string
+          enum: [environmental, power, actuator]
+        status:
+          type: string
+          enum: [online, warning, offline]
+        lastSeen:
+          type: string
+        readingsToday:
+          type: integer
+    SensorInput:
+      type: object
+      required: [macAddress, location, category]
+      properties:
+        macAddress:
+          type: string
+          minLength: 12
+        location:
+          type: string
+          minLength: 2
+        category:
+          type: string
+          enum: [environmental, power, actuator]
+    TelemetryReading:
+      type: object
+      required: [id, sensorId, sensorLabel, metric, value, unit, recordedAt, quality]
+      properties:
+        id:
+          type: string
+        sensorId:
+          type: string
+        sensorLabel:
+          type: string
+        metric:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        recordedAt:
+          type: string
+        quality:
+          type: string
+          enum: [valid, warning, rejected]
+    TelemetryInput:
+      type: object
+      required: [sensorId, metric, value, unit]
+      properties:
+        sensorId:
+          type: string
+        metric:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        recordedAt:
+          type: string
+    ValidationResult:
+      type: object
+      required: [valid, errors, warnings]
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+    IngestionResult:
+      type: object
+      required: [accepted, reading, validation]
+      properties:
+        accepted:
+          type: boolean
+        reading:
+          oneOf:
+            - $ref: "#/components/schemas/TelemetryReading"
+            - type: "null"
+        validation:
+          $ref: "#/components/schemas/ValidationResult"
+    ActivityEvent:
+      type: object
+      required: [id, title, detail, tone, occurredAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        detail:
+          type: string
+        tone:
+          type: string
+          enum: [success, warning, info]
+        occurredAt:
+          type: string
+    GatewaySummary:
+      type: object
+      required: [registeredSensors, onlineSensors, readingsToday, acceptedRate, alerts, lastIngestedAt]
+      properties:
+        registeredSensors:
+          type: integer
+        onlineSensors:
+          type: integer
+        readingsToday:
+          type: integer
+        acceptedRate:
+          type: number
+        alerts:
+          type: integer
+        lastIngestedAt:
+          type: string
+    EngagementStrategy:
+      type: object
+      required: [id, name, description, enabled, trigger, delivery, updatedAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        trigger:
+          type: string
+          enum: [threshold, disconnect, anomaly]
+        delivery:
+          type: string
+          enum: [dashboard, email, webhook]
+        updatedAt:
+          type: string
+    EngagementStrategyInput:
+      type: object
+      required: [name, description, enabled, trigger, delivery]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        trigger:
+          type: string
+          enum: [threshold, disconnect, anomaly]
+        delivery:
+          type: string
+          enum: [dashboard, email, webhook]
+
