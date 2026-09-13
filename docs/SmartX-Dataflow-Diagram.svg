@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="300" viewBox="0 0 1080 300" role="img" aria-labelledby="title desc">
+  <title id="title">Smart-X IoT data flow and engagement model</title>
+  <desc id="desc">Sensors and deployment evidence flow into gateway validation and activity feedback, then into a dashboard and configurable alerts.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#178f83"/>
+    </marker>
+    <style>
+      .box{fill:#f7fbfb;stroke:#178f83;stroke-width:2}.title{font:700 18px Segoe UI,Arial;fill:#16313d}.body{font:14px Segoe UI,Arial;fill:#52666b}.arrow{stroke:#178f83;stroke-width:3;fill:none;marker-end:url(#arrow)}.caption{font:700 16px Segoe UI,Arial;fill:#16313d}
+    </style>
+  </defs>
+  <text x="540" y="28" text-anchor="middle" class="caption">Figure 1. Smart-X data-flow and engagement model</text>
+  <rect x="25" y="82" width="220" height="130" rx="14" class="box"/>
+  <text x="135" y="120" text-anchor="middle" class="title">Sensors + evidence</text>
+  <text x="135" y="150" text-anchor="middle" class="body">Telemetry readings</text>
+  <text x="135" y="174" text-anchor="middle" class="body">Photos, configs, logs</text>
+  <path d="M245 147 H355" class="arrow"/>
+  <rect x="355" y="82" width="270" height="130" rx="14" class="box"/>
+  <text x="490" y="120" text-anchor="middle" class="title">Gateway validation</text>
+  <text x="490" y="150" text-anchor="middle" class="body">Schema + range checks</text>
+  <text x="490" y="174" text-anchor="middle" class="body">Activity and data quality</text>
+  <path d="M625 147 H735" class="arrow"/>
+  <rect x="735" y="82" width="150" height="130" rx="14" class="box"/>
+  <text x="810" y="120" text-anchor="middle" class="title">Dashboard</text>
+  <text x="810" y="150" text-anchor="middle" class="body">Overview</text>
+  <text x="810" y="174" text-anchor="middle" class="body">History + controls</text>
+  <path d="M810 212 V258 H490 V212" class="arrow"/>
+  <rect x="355" y="240" width="270" height="45" rx="12" class="box"/>
+  <text x="490" y="268" text-anchor="middle" class="title">Configurable engagement alerts</text>
+  <path d="M885 147 H1035" class="arrow"/>
+  <rect x="885" y="82" width="170" height="130" rx="14" class="box"/>
+  <text x="970" y="120" text-anchor="middle" class="title">Operator action</text>
+  <text x="970" y="150" text-anchor="middle" class="body">Review warning</text>
+  <text x="970" y="174" text-anchor="middle" class="body">Respond to risk</text>
+</svg>
