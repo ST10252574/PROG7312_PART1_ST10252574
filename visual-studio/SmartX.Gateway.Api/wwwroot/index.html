@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart-X Gateway Dashboard</title>
+  <style>
+    :root{--ink:#16313d;--muted:#6c7e85;--teal:#178f83;--teal-soft:#e2f5f1;--line:#dce7e8;--amber:#ad6a00;--amber-soft:#fff3d9;--red:#b64755;--red-soft:#ffeaed;--paper:#f5f9f9}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px "Segoe UI",Arial,sans-serif}
+    header{background:#173944;color:white;padding:24px 5vw;display:flex;justify-content:space-between;align-items:center;gap:20px}
+    header h1{font-size:25px;margin:0 0 5px;letter-spacing:-.03em}header p{margin:0;color:#b9d0d2}
+    header button{background:#2bb3a1;border:0;border-radius:9px;color:white;font-weight:700;padding:11px 15px;cursor:pointer}
+    nav{background:white;border-bottom:1px solid var(--line);padding:0 5vw;display:flex;gap:8px;overflow:auto}
+    nav a{color:var(--muted);font-weight:700;text-decoration:none;padding:15px 12px;white-space:nowrap}nav a:hover{color:var(--teal)}
+    main{max-width:1250px;margin:28px auto;padding:0 24px}.eyebrow{color:var(--teal);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+    h2{margin:5px 0 16px;font-size:23px;letter-spacing:-.03em}h3{margin:0 0 14px;font-size:17px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.card,.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:19px;box-shadow:0 5px 20px #16313d09}
+    .metric .label{color:var(--muted);font-size:12px;font-weight:700}.metric .value{font-size:31px;font-weight:800;margin-top:9px}.metric .detail{color:var(--muted);font-size:12px;margin-top:6px}
+    .two{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:18px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}td,th{padding:11px 7px;border-bottom:1px solid #edf2f2;vertical-align:top}td{font-size:13px}
+    .pill{display:inline-block;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:800;background:#eef2f3;color:#52666b}.pill.online,.pill.valid,.pill.success{background:var(--teal-soft);color:#147468}.pill.warning{background:var(--amber-soft);color:var(--amber)}.pill.offline,.pill.rejected{background:var(--red-soft);color:var(--red)}
+    .event{padding:12px 0;border-bottom:1px solid #edf2f2}.event:last-child{border:0}.event strong{display:block}.event small{color:var(--muted);display:block;margin-top:4px;line-height:1.4}
+    form{display:grid;gap:12px}label{color:#3d555c;font-size:12px;font-weight:800}input,select,textarea{display:block;width:100%;margin-top:6px;border:1px solid var(--line);border-radius:8px;padding:10px;background:white;font:inherit;color:var(--ink)}textarea{min-height:80px;resize:vertical}
+    .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.button{border:0;border-radius:8px;background:var(--teal);color:white;font-weight:800;padding:11px 14px;cursor:pointer}.button.secondary{background:#eaf2f2;color:var(--ink)}
+    .message{border-radius:9px;padding:10px 12px;background:var(--teal-soft);color:#176b63;display:none}.message.error{background:var(--red-soft);color:var(--red)}.empty{color:var(--muted);padding:16px 0}
+    footer{text-align:center;color:var(--muted);padding:35px 20px;font-size:12px}
+    @media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}@media(max-width:520px){.grid,.formgrid{grid-template-columns:1fr}main{padding:0 14px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>Smart-X Gateway</h1><p>IoT data ingestion and validation dashboard</p></div>
+    <button id="refresh" type="button">Refresh data</button>
+  </header>
+  <nav><a href="#overview">Overview</a><a href="#architecture">Architecture</a><a href="#sensors">Sensors</a><a href="#telemetry">Telemetry</a><a href="#attachments">Attachments</a><a href="#engagement">Engagement</a></nav>
+  <main>
+    <section id="overview">
+      <div class="eyebrow">Gateway status</div><h2>Operational overview</h2>
+      <div class="grid">
+        <div class="card metric"><div class="label">Registered sensors</div><div class="value" id="registered">—</div><div class="detail">Devices in the mesh</div></div>
+        <div class="card metric"><div class="label">Online sensors</div><div class="value" id="online">—</div><div class="detail">Responding normally</div></div>
+        <div class="card metric"><div class="label">Readings today</div><div class="value" id="readings">—</div><div class="detail">Accepted gateway readings</div></div>
+        <div class="card metric"><div class="label">Accepted rate</div><div class="value" id="rate">—</div><div class="detail">Schema and range validation</div></div>
+      </div>
+      <div class="two">
+        <section class="panel"><div class="toolbar"><h3>Recent telemetry</h3><span class="eyebrow" id="lastIngested">—</span></div><div id="telemetryPreview"></div></section>
+        <section class="panel"><h3>Gateway activity</h3><div id="activity"></div></section>
+      </div>
+    </section>
+
+    <section id="architecture" style="margin-top:38px">
+      <div class="eyebrow">Startup interface</div><h2>Smart-X architecture pillars</h2>
+      <div class="grid">
+        <div class="card"><span class="pill online">Active</span><h3 style="margin-top:14px">Sensor Data Ingestion and Telemetry</h3><p class="detail">Register devices, validate readings, and review gateway activity.</p></div>
+        <div class="card"><span class="pill">Part 2</span><h3 style="margin-top:14px">Real-Time Command Stream and History</h3><p class="detail">Command streaming and extended historical playback are reserved for Part 2.</p></div>
+        <div class="card"><span class="pill">Final PoE</span><h3 style="margin-top:14px">Network Topology and Mesh Routing</h3><p class="detail">Topology visualisation and mesh routing will be implemented in the final PoE.</p></div>
+        <div class="card"><span class="eyebrow">Controls</span><h3 style="margin-top:14px">Validation controls</h3><p class="detail"><strong id="topologyNodes">—</strong> deployment nodes validated recursively; <strong id="historyRows">—</strong> raw history batches buffered.</p></div>
+        <div class="card"><span class="pill online">Active</span><h3 style="margin-top:14px">Media and log attachments</h3><p class="detail">Attach device configurations, deployment photos, and hardware logs.</p><a href="#attachments" style="color:var(--teal);font-weight:800">Open attachments →</a></div>
+      </div>
+    </section>
+
+    <section id="sensors" style="margin-top:38px">
+      <div class="eyebrow">Device registry</div><h2>Registered sensors</h2>
+      <div class="two">
+        <section class="panel"><div id="sensorTable"></div></section>
+        <section class="panel"><h3>Register a sensor</h3><form id="sensorForm">
+          <label>MAC address<input id="mac" placeholder="AA:BB:CC:DD:EE:FF" required></label>
+          <label>Location<input id="location" placeholder="Cape Town / Workshop" required></label>
+          <label>Category<select id="category"><option>Environmental</option><option>Power</option><option>Actuator</option></select></label>
+          <button class="button">Register sensor</button><div class="message" id="sensorMessage"></div>
+        </form></section>
+      </div>
+    </section>
+
+    <section id="telemetry" style="margin-top:38px">
+      <div class="eyebrow">Data ingestion</div><h2>Send telemetry</h2>
+      <div class="two">
+        <section class="panel"><h3>Submit a reading for validation</h3><form id="telemetryForm">
+          <label>Sensor<select id="sensorId"></select></label>
+          <div class="formgrid"><label>Metric<input id="metric" value="Temperature" required></label><label>Value<input id="value" type="number" step="any" value="23.4" required></label></div>
+          <label>Unit<input id="unit" value="°C" required></label>
+          <button class="button">Validate and ingest</button><div class="message" id="telemetryMessage"></div>
+        </form></section>
+        <section class="panel"><h3>Recent readings</h3><div id="telemetryTable"></div></section>
+      </div>
+    </section>
+
+    <section id="attachments" style="margin-top:38px">
+      <div class="eyebrow">Media and logs</div><h2>Attach device evidence</h2>
+      <div class="two">
+        <section class="panel"><h3>Upload a configuration, photo, or hardware log</h3><form id="uploadForm" enctype="multipart/form-data">
+          <label>File<input id="file" name="file" type="file" accept=".json,.yaml,.yml,.cfg,.ini,.txt,.log,.csv,.jpg,.jpeg,.png,.gif,.webp" required></label>
+          <button class="button">Attach file</button><div class="message" id="uploadMessage"></div>
+        </form></section>
+        <section class="panel"><h3>Attached files</h3><div id="uploadTable"><div class="empty">No files attached.</div></div></section>
+      </div>
+    </section>
+
+    <section id="engagement" style="margin-top:38px">
+      <div class="eyebrow">User engagement</div><h2>Proactive alert strategy</h2>
+      <section class="panel"><form id="engagementForm">
+        <label>Strategy name<input id="strategyName"></label><label>Description<textarea id="strategyDescription"></textarea></label>
+        <div class="formgrid"><label>Trigger<select id="trigger"><option>Threshold</option><option>Disconnect</option><option>Anomaly</option></select></label><label>Delivery<select id="delivery"><option>Dashboard</option><option>Email</option><option>Webhook</option></select></label></div>
+        <label><input id="enabled" type="checkbox" style="display:inline;width:auto;margin-right:7px">Strategy enabled</label>
+        <button class="button" style="width:max-content">Save strategy</button><div class="message" id="engagementMessage"></div>
+      </form></section>
+    </section>
+  </main>
+  <footer>Smart-X Part 1 • Simulated in-memory gateway • API health: <a href="/api/healthz">/api/healthz</a></footer>
+  <script>
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    const date = value => value ? new Date(value).toLocaleString('en-ZA',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    const pill = value => `<span class="pill ${String(value).toLowerCase()}">${esc(value)}</span>`;
+    async function get(path, options) { const response = await fetch(path, options); if (!response.ok) throw new Error(`${response.status} ${response.statusText}`); return response.json(); }
+    function message(id, text, error=false) { const node=$(id); node.textContent=text; node.className=`message${error?' error':''}`; node.style.display='block'; setTimeout(()=>node.style.display='none',5000); }
+    let sensors=[];
+    function renderSensors() {
+      $('sensorTable').innerHTML = `<table><thead><tr><th>Sensor</th><th>Location</th><th>Category</th><th>Status</th></tr></thead><tbody>${sensors.map(s=>`<tr><td><strong>${esc(s.id)}</strong><br><small>${esc(s.macAddress)}</small></td><td>${esc(s.location)}</td><td>${esc(s.category)}</td><td>${pill(s.status)}</td></tr>`).join('')}</tbody></table>`;
+      $('sensorId').innerHTML=sensors.map(s=>`<option value="${esc(s.id)}">${esc(s.id)} — ${esc(s.location)}</option>`).join('');
+    }
+    function renderTelemetry(items, target='telemetryTable') {
+      $(target).innerHTML=items.length?`<table><thead><tr><th>Reading</th><th>Sensor</th><th>Value</th><th>Quality</th></tr></thead><tbody>${items.map(r=>`<tr><td>${esc(r.metric)}<br><small>${date(r.recordedAt)}</small></td><td>${esc(r.sensorLabel)}</td><td><strong>${esc(r.value)} ${esc(r.unit)}</strong></td><td>${pill(r.quality)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No readings available.</div>';
+    }
+    async function load() {
+      const refreshButton=$('refresh'); refreshButton.disabled=true; refreshButton.textContent='Refreshing…';
+      try {
+        const [summary, sensorData, telemetry, activity, strategy, uploads] = await Promise.all([get('/api/summary'),get('/api/sensors'),get('/api/telemetry?limit=8'),get('/api/activity'),get('/api/engagement'),get('/api/uploads').catch(()=>[])]);
+        sensors=sensorData; $('registered').textContent=summary.registeredSensors; $('online').textContent=`${summary.onlineSensors}/${summary.registeredSensors}`; $('readings').textContent=summary.readingsToday; $('rate').textContent=`${summary.acceptedRate}%`; $('lastIngested').textContent=`Last: ${date(summary.lastIngestedAt)}`;
+        $('topologyNodes').textContent=summary.deploymentNodes; $('historyRows').textContent=summary.historicalBatchRows;
+        renderSensors(); renderTelemetry(telemetry); renderTelemetry(telemetry.slice(0,4),'telemetryPreview');
+        $('activity').innerHTML=activity.map(a=>`<div class="event"><strong>${esc(a.title)} ${pill(a.tone)}</strong><small>${esc(a.detail)}<br>${date(a.occurredAt)}</small></div>`).join('');
+        $('uploadTable').innerHTML=uploads.length?`<table><thead><tr><th>File</th><th>Type</th><th>Size</th></tr></thead><tbody>${uploads.map(u=>`<tr><td>${esc(u.fileName)}<br><small>${date(u.uploadedAt)}</small></td><td>${esc(u.attachmentType)}</td><td>${Math.round(u.sizeBytes/1024)} KB</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No files attached.</div>';
+        $('strategyName').value=strategy.name; $('strategyDescription').value=strategy.description; $('trigger').value=strategy.trigger; $('delivery').value=strategy.delivery; $('enabled').checked=strategy.enabled;
+      } catch (error) { document.querySelector('main').insertAdjacentHTML('afterbegin',`<div class="message error" style="display:block">Could not load gateway data: ${esc(error.message)}</div>`); }
+      finally { refreshButton.disabled=false; refreshButton.textContent='Refresh data'; }
+    }
+    $('refresh').addEventListener('click',load);
+    $('sensorForm').addEventListener('submit',async event=>{event.preventDefault();try{await get('/api/sensors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({macAddress:$('mac').value,location:$('location').value,category:$('category').value})});message('sensorMessage','Sensor registered successfully.');event.target.reset();await load()}catch(e){message('sensorMessage',e.message,true)}});
+    $('telemetryForm').addEventListener('submit',async event=>{event.preventDefault();try{const result=await get('/api/telemetry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sensorId:$('sensorId').value,metric:$('metric').value,value:Number($('value').value),unit:$('unit').value})});message('telemetryMessage',result.accepted?`Reading accepted${result.validation.warnings.length?' with a warning.':'.'}`:result.validation.errors.join(' '),!result.accepted);await load()}catch(e){message('telemetryMessage',e.message,true)}});
+    $('uploadForm').addEventListener('submit',async event=>{event.preventDefault();try{const form=new FormData(event.target);await get('/api/uploads',{method:'POST',body:form});message('uploadMessage','File attached to the gateway record.');event.target.reset();await load()}catch(e){message('uploadMessage',e.message,true)}});
+    $('engagementForm').addEventListener('submit',async event=>{event.preventDefault();try{await get('/api/engagement',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('strategyName').value,description:$('strategyDescription').value,enabled:$('enabled').checked,trigger:$('trigger').value,delivery:$('delivery').value})});message('engagementMessage','Engagement strategy saved.');await load()}catch(e){message('engagementMessage',e.message,true)}});
+    load();
+  </script>
+</body>
+</html>
